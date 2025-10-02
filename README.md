@@ -1,9 +1,9 @@
 # VINS-Fusion
 
-## ROS2 Humble version of VINS-Fusion, suitable for running on ARM devices
+## ROS2 Jazzy version of VINS-Fusion, suitable for running on ARM devices
 
 ### Notices
-It is now possibler to run VINS-Fusion on ROS2 Humble using ros2 launch or ros2 run.
+It is now possibler to run VINS-Fusion on ROS2 Jazzy using ros2 launch or ros2 run.
 
 Code based in large part on [this repository](https://github.com/zinuok/VINS-Fusion-ROS2) by zinuok.
 
@@ -17,22 +17,81 @@ Code based in large part on [this repository](https://github.com/zinuok/VINS-Fus
 
 ### Prerequisites
 - **System**
-  - Ubuntu 20.04
-  - ROS2 humble
+  - Ubuntu 24.04
+  - ROS2 Jazzy (also compatible with ROS2 Humble on Ubuntu 20.04)
 - **Libraries**
-  - OpenCV & cv_bridge for ROS2 Humble
-  - Ceres Solver-2.1.0
-  - Eigen-3.3.9
+  - OpenCV & cv_bridge for ROS2 Jazzy
+  - Ceres Solver 2.2+
+  - Eigen 3.3+
 
+### Dependencies Installation
+Install dependencies using Ubuntu 24.04 system packages (recommended):
+```bash
+sudo apt-get install ros-jazzy-cv-bridge libceres-dev libeigen3-dev
+```
+
+**Note:** Do NOT use the `install_external_deps.sh` script on Ubuntu 24.04/ROS2 Jazzy. Use system packages instead.
 
 ### Build
-1. Install dependencies by running the `install_external_deps.sh` script (OpenCV, Ceres, Eigen will be installed)
-
-2. Build the package using colcon build
+Build the package using colcon:
 ```bash
 colcon build --symlink-install
 ```
 
+Clean build (if needed):
+```bash
+rm -rf build install log
+colcon build --symlink-install
+```
+
+### Running VINS-Fusion
+
+#### Basic Usage
+```bash
+# Source the workspace
+source install/setup.bash
+
+# Run VINS estimator node
+ros2 run vins vins_node <path_to_config_file>
+
+# Run loop closure node (optional, in separate terminal)
+ros2 run loop_fusion loop_fusion_node <path_to_config_file>
+
+# Run global fusion for GPS (optional, in separate terminal)
+ros2 run global_fusion global_fusion_node
+```
+
+#### Config File Paths
+Config files are passed as command-line arguments. You can use relative or absolute paths:
+```bash
+# Relative path from workspace root
+ros2 run vins vins_node src/VINS-Fusion-ROS2-humble-arm/config/euroc/euroc_stereo_imu_config.yaml
+
+# Absolute path
+ros2 run vins vins_node /home/user/vinsfusion_ws/src/VINS-Fusion-ROS2-humble-arm/config/euroc/euroc_stereo_imu_config.yaml
+```
+
+#### Available Configurations
+- **EuRoC dataset:**
+  - `config/euroc/euroc_mono_imu_config.yaml` - Monocular camera + IMU
+  - `config/euroc/euroc_stereo_imu_config.yaml` - Stereo cameras + IMU
+  - `config/euroc/euroc_stereo_config.yaml` - Stereo cameras only
+- **RealSense D435i:** `config/realsense_d435i/`
+- **KITTI dataset:** `config/kitti_odom/`, `config/kitti_raw/`
+
+#### Example: EuRoC Stereo + IMU with Loop Closure
+```bash
+# Terminal 1: Run VINS estimator
+source install/setup.bash
+ros2 run vins vins_node src/VINS-Fusion-ROS2-humble-arm/config/euroc/euroc_stereo_imu_config.yaml
+
+# Terminal 2: Run loop closure (optional)
+source install/setup.bash
+ros2 run loop_fusion loop_fusion_node src/VINS-Fusion-ROS2-humble-arm/config/euroc/euroc_stereo_imu_config.yaml
+
+# Terminal 3: Play ROS2 bag file
+ros2 bag play /path/to/bagfile
+```
 
 ### Playing EuRoC dataset bags
 To download a sample EuRoC dataset bag, run `get_example_data.sh` script. Then convert the bag to ROS2 format using `rosbags-convert` script.

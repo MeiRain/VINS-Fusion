@@ -1,8 +1,8 @@
 /*******************************************************
  * Copyright (C) 2019, Aerial Robotics Group, Hong Kong University of Science and Technology
- * 
+ *
  * This file is part of VINS.
- * 
+ *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *******************************************************/
@@ -26,11 +26,41 @@ bool PoseLocalParameterization::Plus(const double *x, const double *delta, doubl
 
     return true;
 }
-bool PoseLocalParameterization::ComputeJacobian(const double *x, double *jacobian) const
+
+bool PoseLocalParameterization::PlusJacobian(const double *x, double *jacobian) const
 {
     Eigen::Map<Eigen::Matrix<double, 7, 6, Eigen::RowMajor>> j(jacobian);
     j.topRows<6>().setIdentity();
     j.bottomRows<1>().setZero();
+
+    return true;
+}
+
+bool PoseLocalParameterization::Minus(const double *y, const double *x, double *y_minus_x) const
+{
+    Eigen::Map<const Eigen::Vector3d> _p_y(y);
+    Eigen::Map<const Eigen::Quaterniond> _q_y(y + 3);
+
+    Eigen::Map<const Eigen::Vector3d> _p_x(x);
+    Eigen::Map<const Eigen::Quaterniond> _q_x(x + 3);
+
+    Eigen::Map<Eigen::Matrix<double, 6, 1>> y_minus_x_map(y_minus_x);
+
+    // Position difference
+    y_minus_x_map.head<3>() = _p_y - _p_x;
+
+    // Quaternion difference (logarithmic map)
+    Eigen::Quaterniond dq = _q_x.inverse() * _q_y;
+    y_minus_x_map.tail<3>() = 2.0 * dq.vec() / dq.w();
+
+    return true;
+}
+
+bool PoseLocalParameterization::MinusJacobian(const double *x, double *jacobian) const
+{
+    Eigen::Map<Eigen::Matrix<double, 6, 7, Eigen::RowMajor>> j(jacobian);
+    j.topRows<6>().leftCols<6>().setIdentity();
+    j.topRows<6>().rightCols<1>().setZero();
 
     return true;
 }
