@@ -77,6 +77,12 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(
+  DIRECTORY ../config/d435i_local
+  DESTINATION share/${PROJECT_NAME}/config
+  FILES_MATCHING PATTERN "*.yaml"
+)
+
 # Install nodes
 install(
   TARGETS vins_node
